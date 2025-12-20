@@ -4,11 +4,11 @@
   "description": "Angular sidebar component.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/arkon/ng-sidebar.git"
+    "url": "https://github.com/Irfankurni/ngx-sidebar.git"
   },
   "homepage": "http://echeung.me/ng-sidebar/",
   "bugs": {
-    "url": "https://github.com/arkon/ng-sidebar/issues"
+    "url": "https://github.com/Irfankurni/ngx-sidebar.git/issues"
   },
   "author": "Eugene Cheung",
   "contributors": [
