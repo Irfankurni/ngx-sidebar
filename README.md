@@ -31,7 +31,7 @@ const packages = {
 
 ## Changelog
 
-See the [releases page](https://github.com/arkon/ng-sidebar/releases) on GitHub.
+See the [releases page](https://github.com/Irfankurni/ngx-sidebar/releases) on GitHub.
 
 ## Usage
 
