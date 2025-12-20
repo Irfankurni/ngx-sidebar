@@ -1,26 +1,25 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
+    "target": "ES2022",
+    "useDefineForClassFields": false,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "module": "ES2022",
     "moduleResolution": "node",
-    "noUnusedParameters": true,
-    "noUnusedLocals": true,
-    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "declaration": true,
-    "removeComments": true,
-    "outDir": "lib_commonjs/",
-    "rootDir": "src",
-    "lib": ["dom", "es5", "es2015.core", "es2015.collection", "es2015.iterable", "es2015.promise"]
+    "lib": ["DOM", "ES2022"]
   },
-  "include": [
-    "src/**/*"
-  ],
-  "compileOnSave": false,
-  "buildOnSave": false,
   "angularCompilerOptions": {
-    "decoratorsAs": "static fields",
-    "skipTemplateCodegen": true,
-    "preserveWhitespaces": false
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
   }
 }

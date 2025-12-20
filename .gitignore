@@ -16,4 +16,5 @@ lib_commonjs/
 lib_esmodule/
 
 # Built demo files
-demo/dist
+demo/**
+dist/*

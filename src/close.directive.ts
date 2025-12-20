@@ -1,12 +1,13 @@
-import { Directive } from '@angular/core';
+import { Directive } from "@angular/core";
 
-import { Sidebar } from './sidebar.component';
+import { Sidebar } from "./sidebar.component";
 
 @Directive({
-  selector: '[closeSidebar]',
+  selector: "[closeSidebar]",
   host: {
-    '(click)': '_onClick()'
-  }
+    "(click)": "_onClick()",
+  },
+  standalone: true,
 })
 export class CloseSidebar {
   constructor(private _sidebar: Sidebar) {}

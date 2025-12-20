@@ -1,22 +1,19 @@
 {
-  "name": "ng-sidebar",
-  "version": "9.4.3",
-  "description": "[DEPRECATED] Angular sidebar component.",
+  "name": "@kuradev/ng-sidebar",
+  "version": "18.0.0",
+  "description": "Angular sidebar component.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/arkon/ng-sidebar.git"
+    "url": "git+https://github.com/kuradev/ngx-sidebar.git"
   },
-  "homepage": "http://echeung.me/ng-sidebar/",
+  "homepage": "https://github.com/kuradev/ngx-sidebar.git",
   "bugs": {
-    "url": "https://github.com/arkon/ng-sidebar/issues"
+    "url": "https://github.com/kuradev/ngx-sidebar.git/issues"
   },
-  "files": [
-    "lib_commonjs/*",
-    "lib_esmodule/*",
-    "README.md",
-    "LICENSE"
-  ],
   "author": "Eugene Cheung",
+  "contributors": [
+    "Irfan Kurniawan (kuradev)"
+  ],
   "license": "MIT",
   "keywords": [
     "angular",
@@ -24,31 +21,33 @@
     "sidebar",
     "component"
   ],
-  "main": "./lib_commonjs/index.js",
-  "module": "./lib_esmodule/index.js",
-  "jsnext:main": "./lib_esmodule/index.js",
-  "typings": "./lib_commonjs/index.d.ts",
+  "exports": {
+    ".": {
+      "sass": "./_index.scss"
+    }
+  },
   "scripts": {
-    "lint": "tslint --project tsconfig.json src/**/*.ts",
-    "build:commonjs": "rimraf lib_commonjs && ngc -p tsconfig.json",
-    "build:esmodule": "rimraf lib_esmodule && ngc -p tsconfig.module.json",
-    "build": "npm run lint && npm run build:commonjs && npm run build:esmodule",
-    "prepare": "npm run build"
+    "build": "ng-packagr -p ng-package.json",
+    "watch": "ng-packagr -p ng-package.json --watch",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "@angular/core": ">=8.0.0",
-    "@angular/common": ">=8.0.0"
+    "@angular/common": ">=16.0.0",
+    "@angular/core": ">=16.0.0",
+    "rxjs": "^6.5.3 || ^7.4.0"
   },
   "devDependencies": {
-    "@angular/common": "^8.2.14",
-    "@angular/compiler": "^8.2.14",
-    "@angular/compiler-cli": "^8.2.14",
-    "@angular/core": "^8.2.14",
-    "@angular/platform-browser": "^8.2.14",
-    "rimraf": "^3.0.2",
-    "rxjs": "^6.5.5",
-    "tslint": "^5.20.1",
-    "typescript": "~3.4.0",
-    "zone.js": "~0.9.1"
+    "@angular-devkit/build-angular": "^18.2.0",
+    "@angular/common": "^18.2.0",
+    "@angular/compiler": "^18.2.0",
+    "@angular/compiler-cli": "^18.2.0",
+    "@angular/core": "^18.2.0",
+    "@angular/platform-browser": "^18.2.0",
+    "@angular/platform-browser-dynamic": "^18.2.0",
+    "ng-packagr": "^18.2.0",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.6.2",
+    "typescript": "~5.5.2",
+    "zone.js": "~0.14.10"
   }
 }

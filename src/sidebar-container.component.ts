@@ -10,71 +10,84 @@ import {
   OnDestroy,
   Output,
   PLATFORM_ID,
-  SimpleChanges
-} from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+  SimpleChanges,
+} from "@angular/core";
+import { isPlatformBrowser, CommonModule } from "@angular/common";
+import { Subscription } from "rxjs";
 
-import { Sidebar } from './sidebar.component';
+import { Sidebar } from "./sidebar.component";
 
 // Based on https://github.com/angular/material2/tree/master/src/lib/sidenav
 @Component({
-  selector: 'ng-sidebar-container',
+  selector: "ng-sidebar-container",
   template: `
-    <div *ngIf="showBackdrop"
+    <div
+      *ngIf="showBackdrop"
       aria-hidden="true"
       class="ng-sidebar__backdrop"
       [ngClass]="backdropClass"
-      (click)="_onBackdropClicked()"></div>
+      (click)="_onBackdropClicked()"
+    ></div>
 
     <ng-content select="ng-sidebar,[ng-sidebar]"></ng-content>
 
-    <div class="ng-sidebar__content"
+    <div
+      class="ng-sidebar__content"
       [class.ng-sidebar__content--animate]="animate"
       [ngClass]="contentClass"
-      [ngStyle]="_getContentStyle()">
+      [ngStyle]="_getContentStyle()"
+    >
       <ng-content select="[ng-sidebar-content]"></ng-content>
     </div>
   `,
-  styles: [`
-    :host {
-      box-sizing: border-box;
-      display: block;
-      position: relative;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
+  styles: [
+    `
+      :host {
+        box-sizing: border-box;
+        display: block;
+        position: relative;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
 
-    .ng-sidebar__backdrop {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #000;
-      opacity: 0.75;
-      pointer-events: auto;
-      z-index: 1;
-    }
+      .ng-sidebar__backdrop {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #000;
+        opacity: 0.75;
+        pointer-events: auto;
+        z-index: 1;
+      }
 
-    .ng-sidebar__content {
-      -webkit-overflow-scrolling: touch;
-      overflow: auto;
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-    }
+      .ng-sidebar__content {
+        -webkit-overflow-scrolling: touch;
+        overflow: auto;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
 
-    .ng-sidebar__content--animate {
-      -webkit-transition: -webkit-transform 0.3s cubic-bezier(0, 0, 0.3, 1), padding 0.3s cubic-bezier(0, 0, 0.3, 1);
-      transition: transform 0.3s cubic-bezier(0, 0, 0.3, 1), padding 0.3s cubic-bezier(0, 0, 0.3, 1);
-    }
-  `],
-  changeDetection: ChangeDetectionStrategy.OnPush
+      .ng-sidebar__content--animate {
+        -webkit-transition: -webkit-transform 0.3s cubic-bezier(0, 0, 0.3, 1),
+          padding 0.3s cubic-bezier(0, 0, 0.3, 1);
+        transition: transform 0.3s cubic-bezier(0, 0, 0.3, 1),
+          padding 0.3s cubic-bezier(0, 0, 0.3, 1);
+      }
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [CommonModule],
 })
-export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy {
+export class SidebarContainer
+  implements AfterContentInit, OnChanges, OnDestroy
+{
   @Input() animate: boolean = true;
 
   @Input() allowSidebarBackdropControl: boolean = true;
@@ -82,16 +95,18 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
   @Output() showBackdropChange = new EventEmitter<boolean>();
   @Output() onBackdropClicked = new EventEmitter<null>();
 
-  @Input() contentClass: string;
-  @Input() backdropClass: string;
+  @Input() contentClass?: string;
+  @Input() backdropClass?: string;
 
   private _sidebars: Array<Sidebar> = [];
+  private _subscriptions: Map<Sidebar, Subscription[]> = new Map();
 
   private _isBrowser: boolean;
 
   constructor(
     private _ref: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) platformId: Object) {
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
     this._isBrowser = isPlatformBrowser(platformId);
   }
 
@@ -108,8 +123,8 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
       return;
     }
 
-    if (changes['showBackdrop']) {
-      this.showBackdropChange.emit(changes['showBackdrop'].currentValue);
+    if (changes["showBackdrop"]) {
+      this.showBackdropChange.emit(changes["showBackdrop"].currentValue);
     }
   }
 
@@ -144,6 +159,7 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
     const index = this._sidebars.indexOf(sidebar);
     if (index !== -1) {
       this._sidebars.splice(index, 1);
+      this._unsubscribe(sidebar);
     }
   }
 
@@ -160,17 +176,18 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
       top = 0,
       bottom = 0;
 
-    let transformStyle: string = '';
-    let heightStyle: string = '';
-    let widthStyle: string = '';
+    let transformStyle: string = "";
+    let heightStyle: string = "";
+    let widthStyle: string = "";
 
     for (const sidebar of this._sidebars) {
       // Slide mode: we need to translate the entire container
       if (sidebar._isModeSlide) {
         if (sidebar.opened) {
-          const transformDir: string = sidebar._isLeftOrRight ? 'X' : 'Y';
-          const transformAmt: string =
-            `${sidebar._isLeftOrTop ? '' : '-'}${sidebar._isLeftOrRight ? sidebar._width : sidebar._height}`;
+          const transformDir: string = sidebar._isLeftOrRight ? "X" : "Y";
+          const transformAmt: string = `${sidebar._isLeftOrTop ? "" : "-"}${
+            sidebar._isLeftOrRight ? sidebar._width : sidebar._height
+          }`;
 
           transformStyle = `translate${transformDir}(${transformAmt}px)`;
         }
@@ -182,32 +199,34 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
 
         if (sidebar._isModeSlide && sidebar.opened) {
           if (sidebar._isLeftOrRight) {
-            widthStyle = '100%';
+            widthStyle = "100%";
           } else {
-            heightStyle = '100%';
+            heightStyle = "100%";
           }
         } else {
           if (sidebar._isDocked || (sidebar._isModeOver && sidebar.dock)) {
             paddingAmt = sidebar._dockedSize;
           } else {
-            paddingAmt = sidebar._isLeftOrRight ? sidebar._width : sidebar._height;
+            paddingAmt = sidebar._isLeftOrRight
+              ? sidebar._width
+              : sidebar._height;
           }
         }
 
         switch (sidebar.position) {
-          case 'left':
+          case "left":
             left = Math.max(left, paddingAmt);
             break;
 
-          case 'right':
+          case "right":
             right = Math.max(right, paddingAmt);
             break;
 
-          case 'top':
+          case "top":
             top = Math.max(top, paddingAmt);
             break;
 
-          case 'bottom':
+          case "bottom":
             bottom = Math.max(bottom, paddingAmt);
             break;
         }
@@ -219,7 +238,7 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
       webkitTransform: transformStyle,
       transform: transformStyle,
       height: heightStyle,
-      width: widthStyle
+      width: widthStyle,
     } as CSSStyleDeclaration;
   }
 
@@ -232,7 +251,11 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
   _onBackdropClicked(): void {
     let backdropClicked = false;
     for (const sidebar of this._sidebars) {
-      if (sidebar.opened && sidebar.showBackdrop && sidebar.closeOnClickBackdrop) {
+      if (
+        sidebar.opened &&
+        sidebar.showBackdrop &&
+        sidebar.closeOnClickBackdrop
+      ) {
         sidebar.close();
         backdropClicked = true;
       }
@@ -247,33 +270,34 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
    * Subscribes from a sidebar events to react properly.
    */
   private _subscribe(sidebar: Sidebar): void {
-    sidebar.onOpenStart.subscribe(() => this._onToggle());
-    sidebar.onOpened.subscribe(() => this._markForCheck());
+    const subs: Subscription[] = [
+      sidebar.onOpenStart.subscribe(() => this._onToggle()),
+      sidebar.onOpened.subscribe(() => this._markForCheck()),
+      sidebar.onCloseStart.subscribe(() => this._onToggle()),
+      sidebar.onClosed.subscribe(() => this._markForCheck()),
+      sidebar.onModeChange.subscribe(() => this._markForCheck()),
+      sidebar.onPositionChange.subscribe(() => this._markForCheck()),
+      sidebar._onRerender.subscribe(() => this._markForCheck()),
+    ];
 
-    sidebar.onCloseStart.subscribe(() => this._onToggle());
-    sidebar.onClosed.subscribe(() => this._markForCheck());
-
-    sidebar.onModeChange.subscribe(() => this._markForCheck());
-    sidebar.onPositionChange.subscribe(() => this._markForCheck());
-
-    sidebar._onRerender.subscribe(() => this._markForCheck());
+    this._subscriptions.set(sidebar, subs);
   }
 
   /**
    * Unsubscribes from all sidebars.
    */
-  private _unsubscribe(): void {
-    for (const sidebar of this._sidebars) {
-      sidebar.onOpenStart.unsubscribe();
-      sidebar.onOpened.unsubscribe();
-
-      sidebar.onCloseStart.unsubscribe();
-      sidebar.onClosed.unsubscribe();
-
-      sidebar.onModeChange.unsubscribe();
-      sidebar.onPositionChange.unsubscribe();
-
-      sidebar._onRerender.unsubscribe();
+  private _unsubscribe(sidebar?: Sidebar): void {
+    if (sidebar) {
+      const subs = this._subscriptions.get(sidebar);
+      if (subs) {
+        subs.forEach((s) => s.unsubscribe());
+        this._subscriptions.delete(sidebar);
+      }
+    } else {
+      this._subscriptions.forEach((subs) =>
+        subs.forEach((s) => s.unsubscribe())
+      );
+      this._subscriptions.clear();
     }
   }
 
@@ -283,7 +307,9 @@ export class SidebarContainer implements AfterContentInit, OnChanges, OnDestroy 
   private _onToggle(): void {
     if (this._sidebars.length > 0 && this.allowSidebarBackdropControl) {
       // Show backdrop if a single open sidebar has it set
-      const hasOpen = this._sidebars.some(sidebar => sidebar.opened && sidebar.showBackdrop);
+      const hasOpen = this._sidebars.some(
+        (sidebar) => sidebar.opened && sidebar.showBackdrop
+      );
 
       this.showBackdrop = hasOpen;
       this.showBackdropChange.emit(hasOpen);
