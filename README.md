@@ -1,4 +1,4 @@
-# @ngx-sidebar/ng-sidebar
+# @kuradev/ng-sidebar
 
 An Angular sidebar component (supporting Angular 16+).
 
@@ -7,7 +7,7 @@ This project is a fork of [arkon/ng-sidebar](https://github.com/arkon/ng-sidebar
 ## Installation
 
 ```shell
-npm install --save @ngx-sidebar/ng-sidebar
+npm install --save @kuradev/ng-sidebar
 ```
 
 If you're using SystemJS, be sure to add the appropriate settings to your SystemJS config:
@@ -15,13 +15,13 @@ If you're using SystemJS, be sure to add the appropriate settings to your System
 ```js
 const map = {
   // ...
-  "@ngx-sidebar/ng-sidebar": "node_modules/@ngx-sidebar/ng-sidebar",
+  "@kuradev/ng-sidebar": "node_modules/@kuradev/ng-sidebar",
   // ...
 };
 
 const packages = {
   // ...
-  "@ngx-sidebar/ng-sidebar": {
+  "@kuradev/ng-sidebar": {
     main: "fesm2022/index.mjs",
     defaultExtension: "mjs",
   },
@@ -40,11 +40,7 @@ See the [releases page](https://github.com/arkon/ng-sidebar/releases) on GitHub.
 Import the standalone components/directives directly:
 
 ```typescript
-import {
-  SidebarContainer,
-  Sidebar,
-  CloseSidebar,
-} from "@ngx-sidebar/ng-sidebar";
+import { SidebarContainer, Sidebar, CloseSidebar } from "@kuradev/ng-sidebar";
 
 @Component({
   standalone: true,
@@ -59,7 +55,7 @@ export class MyComponent {}
 Add `SidebarModule` to your app module:
 
 ```typescript
-import { SidebarModule } from "@ngx-sidebar/ng-sidebar";
+import { SidebarModule } from "@kuradev/ng-sidebar";
 
 @NgModule({
   declarations: [AppComponent],
@@ -243,4 +239,4 @@ The entire page slides over to show the sidebar. Note that this only works if yo
 ## Contributors
 
 - Eugene Cheung (Original Author)
-- Irfan Kurniawan
+- Irfan Kurniawan (kuradev)
