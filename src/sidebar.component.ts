@@ -14,95 +14,104 @@ import {
   Output,
   PLATFORM_ID,
   SimpleChanges,
-  ViewChild
-} from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+  ViewChild,
+} from "@angular/core";
+import { isPlatformBrowser, CommonModule } from "@angular/common";
 
-import { SidebarContainer } from './sidebar-container.component';
-import { isLTR, isIOS } from './utils';
+import { SidebarContainer } from "./sidebar-container.component";
+import { isLTR, isIOS } from "./utils";
 
 @Component({
-  selector: 'ng-sidebar',
+  selector: "ng-sidebar",
   template: `
-    <aside #sidebar
+    <aside
+      #sidebar
       role="complementary"
       [attr.aria-hidden]="!opened"
       [attr.aria-label]="ariaLabel"
-      class="ng-sidebar ng-sidebar--{{opened ? 'opened' : 'closed'}} ng-sidebar--{{position}} ng-sidebar--{{mode}}"
+      class="ng-sidebar ng-sidebar--{{
+        opened ? 'opened' : 'closed'
+      }} ng-sidebar--{{ position }} ng-sidebar--{{ mode }}"
       [class.ng-sidebar--docked]="_isDocked"
       [class.ng-sidebar--inert]="_isInert"
       [class.ng-sidebar--animate]="animate"
       [ngClass]="sidebarClass"
-      [ngStyle]="_getStyle()">
+      [ngStyle]="_getStyle()"
+    >
       <ng-content></ng-content>
     </aside>
   `,
-  styles: [`
-    .ng-sidebar {
-      -webkit-overflow-scrolling: touch;
-      overflow: auto;
-      pointer-events: auto;
-      position: absolute;
-      touch-action: auto;
-      will-change: initial;
-      z-index: 2;
-    }
+  styles: [
+    `
+      .ng-sidebar {
+        -webkit-overflow-scrolling: touch;
+        overflow: auto;
+        pointer-events: auto;
+        position: absolute;
+        touch-action: auto;
+        will-change: initial;
+        z-index: 2;
+      }
 
-    .ng-sidebar--left {
-      bottom: 0;
-      left: 0;
-      top: 0;
-    }
+      .ng-sidebar--left {
+        bottom: 0;
+        left: 0;
+        top: 0;
+      }
 
-    .ng-sidebar--right {
-      bottom: 0;
-      right: 0;
-      top: 0;
-    }
+      .ng-sidebar--right {
+        bottom: 0;
+        right: 0;
+        top: 0;
+      }
 
-    .ng-sidebar--top {
-      left: 0;
-      right: 0;
-      top: 0;
-    }
+      .ng-sidebar--top {
+        left: 0;
+        right: 0;
+        top: 0;
+      }
 
-    .ng-sidebar--bottom {
-      bottom: 0;
-      left: 0;
-      right: 0;
-    }
+      .ng-sidebar--bottom {
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
 
-    .ng-sidebar--inert {
-      pointer-events: none;
-      touch-action: none;
-      will-change: transform;
-    }
+      .ng-sidebar--inert {
+        pointer-events: none;
+        touch-action: none;
+        will-change: transform;
+      }
 
-    .ng-sidebar--animate {
-      -webkit-transition: -webkit-transform 0.3s cubic-bezier(0, 0, 0.3, 1);
-      transition: transform 0.3s cubic-bezier(0, 0, 0.3, 1);
-    }
-  `],
-  changeDetection: ChangeDetectionStrategy.OnPush
+      .ng-sidebar--animate {
+        -webkit-transition: -webkit-transform 0.3s cubic-bezier(0, 0, 0.3, 1);
+        transition: transform 0.3s cubic-bezier(0, 0, 0.3, 1);
+      }
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [CommonModule],
 })
 export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
   // `openedChange` allows for "2-way" data binding
   @Input() opened: boolean = false;
   @Output() openedChange: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  @Input() mode: 'over' | 'push' | 'slide' = 'over';
+  @Input() mode: "over" | "push" | "slide" = "over";
   @Input() dock: boolean = false;
-  @Input() dockedSize: string = '0px';
-  @Input() position: 'start' | 'end' | 'left' | 'right' | 'top' | 'bottom' = 'start';
+  @Input() dockedSize: string = "0px";
+  @Input() position: "start" | "end" | "left" | "right" | "top" | "bottom" =
+    "start";
   @Input() animate: boolean = true;
 
-  @Input() autoCollapseHeight: number;
-  @Input() autoCollapseWidth: number;
+  @Input() autoCollapseHeight?: number;
+  @Input() autoCollapseWidth?: number;
   @Input() autoCollapseOnInit: boolean = true;
 
-  @Input() sidebarClass: string;
+  @Input() sidebarClass?: string;
 
-  @Input() ariaLabel: string;
+  @Input() ariaLabel?: string;
   @Input() trapFocus: boolean = false;
   @Input() autoFocus: boolean = true;
 
@@ -111,7 +120,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
   @Input() closeOnClickOutside: boolean = false;
 
   @Input() keyClose: boolean = false;
-  @Input() keyCode: number = 27; // Default to ESC key
+  @Input() key: string = "Escape"; // Default to Escape key
 
   @Output() onContentInit: EventEmitter<null> = new EventEmitter<null>();
   @Output() onOpenStart: EventEmitter<null> = new EventEmitter<null>();
@@ -126,22 +135,23 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
   @Output() _onRerender: EventEmitter<null> = new EventEmitter<null>();
 
   /** @internal */
-  @ViewChild('sidebar', {static: false}) _elSidebar: ElementRef;
+  @ViewChild("sidebar", { static: false }) _elSidebar!: ElementRef;
 
-  private _focusableElementsString: string = 'a[href], area[href], input:not([disabled]), select:not([disabled]),' +
-    'textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex], [contenteditable]';
-  private _focusableElements: Array<HTMLElement>;
-  private _focusedBeforeOpen: HTMLElement;
+  private _focusableElementsString: string =
+    "a[href], area[href], input:not([disabled]), select:not([disabled])," +
+    "textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex], [contenteditable]";
+  private _focusableElements?: Array<HTMLElement>;
+  private _focusedBeforeOpen: HTMLElement | null = null;
 
-  private _tabIndexAttr: string = '__tabindex__';
-  private _tabIndexIndicatorAttr: string = '__ngsidebar-tabindex__';
+  private _tabIndexAttr: string = "__tabindex__";
+  private _tabIndexIndicatorAttr: string = "__ngsidebar-tabindex__";
 
-  private _wasCollapsed: boolean;
+  private _wasCollapsed: boolean = false;
 
   // Delay initial animation (issues #59, #112)
-  private _shouldAnimate: boolean;
+  private _shouldAnimate: boolean = false;
 
-  private _clickEvent: string = 'click';
+  private _clickEvent: string = "click";
   private _onClickOutsideAttached: boolean = false;
   private _onKeyDownAttached: boolean = false;
   private _onResizeAttached: boolean = false;
@@ -151,19 +161,20 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
   constructor(
     @Optional() private _container: SidebarContainer,
     private _ref: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) platformId: Object) {
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
     if (!this._container) {
       throw new Error(
-        '<ng-sidebar> must be inside a <ng-sidebar-container>. ' +
-        'See https://github.com/arkon/ng-sidebar#usage for more info.'
+        "<ng-sidebar> must be inside a <ng-sidebar-container>. " +
+          "See https://github.com/arkon/ng-sidebar#usage for more info."
       );
     }
 
     this._isBrowser = isPlatformBrowser(platformId);
 
     // Handle taps in iOS
-    if (this._isBrowser && isIOS() && !('onclick' in window)) {
-      this._clickEvent = 'touchstart';
+    if (this._isBrowser && isIOS() && !("onclick" in window)) {
+      this._clickEvent = "touchstart";
     }
 
     this._normalizePosition();
@@ -203,59 +214,59 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
       return;
     }
 
-    if (changes['animate'] && this._shouldAnimate) {
-      this._shouldAnimate = changes['animate'].currentValue;
+    if (changes["animate"] && this._shouldAnimate) {
+      this._shouldAnimate = changes["animate"].currentValue;
     }
 
-    if (changes['closeOnClickOutside']) {
-      if (changes['closeOnClickOutside'].currentValue) {
+    if (changes["closeOnClickOutside"]) {
+      if (changes["closeOnClickOutside"].currentValue) {
         this._initCloseClickListener();
       } else {
         this._destroyCloseClickListener();
       }
     }
-    if (changes['keyClose']) {
-      if (changes['keyClose'].currentValue) {
+    if (changes["keyClose"]) {
+      if (changes["keyClose"].currentValue) {
         this._initCloseKeyDownListener();
       } else {
         this._destroyCloseKeyDownListener();
       }
     }
 
-    if (changes['position']) {
+    if (changes["position"]) {
       // Handle "start" and "end" aliases
       this._normalizePosition();
 
       // Emit change in timeout to allow for position change to be rendered first
       setTimeout(() => {
-        this.onPositionChange.emit(changes['position'].currentValue);
+        this.onPositionChange.emit(changes["position"].currentValue);
       });
     }
 
-    if (changes['mode']) {
+    if (changes["mode"]) {
       setTimeout(() => {
-        this.onModeChange.emit(changes['mode'].currentValue);
+        this.onModeChange.emit(changes["mode"].currentValue);
       });
     }
 
-    if (changes['dock']) {
+    if (changes["dock"]) {
       this.triggerRerender();
     }
 
-    if (changes['opened']) {
+    if (changes["opened"]) {
       if (this._shouldAnimate) {
         this.animate = true;
         this._shouldAnimate = false;
       }
 
-      if (changes['opened'].currentValue) {
+      if (changes["opened"].currentValue) {
         this.open();
       } else {
         this.close();
       }
     }
 
-    if (changes['autoCollapseHeight'] || changes['autoCollapseWidth']) {
+    if (changes["autoCollapseHeight"] || changes["autoCollapseWidth"]) {
       this._initCollapseListeners();
     }
   }
@@ -291,7 +302,10 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
 
     setTimeout(() => {
       if (this.animate && !this._isModeSlide) {
-        this._elSidebar.nativeElement.addEventListener('transitionend', this._onTransitionEnd);
+        this._elSidebar.nativeElement.addEventListener(
+          "transitionend",
+          this._onTransitionEnd
+        );
       } else {
         this._setFocused();
         this._initCloseListeners();
@@ -320,7 +334,10 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
 
     setTimeout(() => {
       if (this.animate && !this._isModeSlide) {
-        this._elSidebar.nativeElement.addEventListener('transitionend', this._onTransitionEnd);
+        this._elSidebar.nativeElement.addEventListener(
+          "transitionend",
+          this._onTransitionEnd
+        );
       } else {
         this._setFocused();
         this._destroyCloseListeners();
@@ -353,25 +370,32 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * @return {CSSStyleDeclaration} The transform styles, with the WebKit-prefixed version as well.
    */
   _getStyle(): CSSStyleDeclaration {
-    let transformStyle: string = '';
+    let transformStyle: string = "";
 
     // Hides sidebar off screen when closed
     if (!this.opened) {
-      const transformDir: string = 'translate' + (this._isLeftOrRight ? 'X' : 'Y');
-      let translateAmt: string = `${this._isLeftOrTop ? '-' : ''}100%`;
+      const transformDir: string =
+        "translate" + (this._isLeftOrRight ? "X" : "Y");
+      let translateAmt: string = `${this._isLeftOrTop ? "-" : ""}100%`;
 
       transformStyle = `${transformDir}(${translateAmt})`;
 
       // Docked mode: partially remains open
       // Note that using `calc(...)` within `transform(...)` doesn't work in IE
-      if (this.dock && this._dockedSize > 0 && !(this._isModeSlide && this.opened)) {
-        transformStyle += ` ${transformDir}(${this._isLeftOrTop ? '+' : '-'}${this.dockedSize})`;
+      if (
+        this.dock &&
+        this._dockedSize > 0 &&
+        !(this._isModeSlide && this.opened)
+      ) {
+        transformStyle += ` ${transformDir}(${this._isLeftOrTop ? "+" : "-"}${
+          this.dockedSize
+        })`;
       }
     }
 
     return {
       webkitTransform: transformStyle,
-      transform: transformStyle
+      transform: transformStyle,
     } as CSSStyleDeclaration;
   }
 
@@ -382,7 +406,10 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * transition is completed.
    */
   _onTransitionEnd(e: TransitionEvent): void {
-    if (e.target === this._elSidebar.nativeElement && e.propertyName.endsWith('transform')) {
+    if (
+      e.target === this._elSidebar.nativeElement &&
+      e.propertyName.endsWith("transform")
+    ) {
       this._setFocused();
 
       if (this.opened) {
@@ -395,7 +422,10 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
 
       this.onTransitionEnd.emit();
 
-      this._elSidebar.nativeElement.removeEventListener('transitionend', this._onTransitionEnd);
+      this._elSidebar.nativeElement.removeEventListener(
+        "transitionend",
+        this._onTransitionEnd
+      );
     }
   }
 
@@ -424,7 +454,10 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * Loops focus back to the start of the sidebar if set to do so.
    */
   private _onFocusTrap(e: FocusEvent): void {
-    if (this._shouldTrapFocus && !this._elSidebar.nativeElement.contains(e.target)) {
+    if (
+      this._shouldTrapFocus &&
+      !this._elSidebar.nativeElement.contains(e.target as Node)
+    ) {
       this._focusFirstItem();
     }
   }
@@ -435,7 +468,9 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    */
   private _setFocused(): void {
     this._focusableElements = Array.from(
-      this._elSidebar.nativeElement.querySelectorAll(this._focusableElementsString)
+      this._elSidebar.nativeElement.querySelectorAll(
+        this._focusableElementsString
+      )
     ) as Array<HTMLElement>;
 
     if (this.opened) {
@@ -444,12 +479,13 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
       // Restore focusability, with previous tabindex attributes
       for (const el of this._focusableElements) {
         const prevTabIndex = el.getAttribute(this._tabIndexAttr);
-        const wasTabIndexSet = el.getAttribute(this._tabIndexIndicatorAttr) !== null;
+        const wasTabIndexSet =
+          el.getAttribute(this._tabIndexIndicatorAttr) !== null;
         if (prevTabIndex !== null) {
-          el.setAttribute('tabindex', prevTabIndex);
+          el.setAttribute("tabindex", prevTabIndex);
           el.removeAttribute(this._tabIndexAttr);
         } else if (wasTabIndexSet) {
-          el.removeAttribute('tabindex');
+          el.removeAttribute("tabindex");
           el.removeAttribute(this._tabIndexIndicatorAttr);
         }
       }
@@ -458,20 +494,20 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
         this._focusFirstItem();
       }
 
-      document.addEventListener('focus', this._onFocusTrap, true);
+      document.addEventListener("focus", this._onFocusTrap, true);
     } else {
       // Manually make all focusable elements unfocusable, saving existing tabindex attributes
       for (const el of this._focusableElements) {
-        const existingTabIndex = el.getAttribute('tabindex');
-        el.setAttribute('tabindex', '-1');
-        el.setAttribute(this._tabIndexIndicatorAttr, '');
+        const existingTabIndex = el.getAttribute("tabindex");
+        el.setAttribute("tabindex", "-1");
+        el.setAttribute(this._tabIndexIndicatorAttr, "");
 
         if (existingTabIndex !== null) {
           el.setAttribute(this._tabIndexAttr, existingTabIndex);
         }
       }
 
-      document.removeEventListener('focus', this._onFocusTrap, true);
+      document.removeEventListener("focus", this._onFocusTrap, true);
 
       // Set focus back to element before the sidebar was opened
       if (this._focusedBeforeOpen && this.autoFocus && this._isModeOver) {
@@ -495,7 +531,11 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
   private _initCloseClickListener(): void {
     // In a timeout so that things render first
     setTimeout(() => {
-      if (this.opened && this.closeOnClickOutside && !this._onClickOutsideAttached) {
+      if (
+        this.opened &&
+        this.closeOnClickOutside &&
+        !this._onClickOutsideAttached
+      ) {
         document.addEventListener(this._clickEvent, this._onClickOutside);
         this._onClickOutsideAttached = true;
       }
@@ -506,7 +546,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
     // In a timeout so that things render first
     setTimeout(() => {
       if (this.opened && this.keyClose && !this._onKeyDownAttached) {
-        document.addEventListener('keydown', this._onKeyDown);
+        document.addEventListener("keydown", this._onKeyDown);
         this._onKeyDownAttached = true;
       }
     });
@@ -529,7 +569,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
 
   private _destroyCloseKeyDownListener(): void {
     if (this._onKeyDownAttached) {
-      document.removeEventListener('keydown', this._onKeyDown);
+      document.removeEventListener("keydown", this._onKeyDown);
       this._onKeyDownAttached = false;
     }
   }
@@ -540,8 +580,12 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    *
    * @param e {MouseEvent} Mouse click event.
    */
-  private _onClickOutside(e: MouseEvent): void {
-    if (this._onClickOutsideAttached && this._elSidebar && !this._elSidebar.nativeElement.contains(e.target)) {
+  private _onClickOutside(e: MouseEvent | Event): void {
+    if (
+      this._onClickOutsideAttached &&
+      this._elSidebar &&
+      !this._elSidebar.nativeElement.contains(e.target as Node)
+    ) {
       this.close();
     }
   }
@@ -552,9 +596,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * @param e {KeyboardEvent} Normalized keydown event.
    */
   private _onKeyDown(e: KeyboardEvent | Event): void {
-    e = e || window.event;
-
-    if ((e as KeyboardEvent).keyCode === this.keyCode) {
+    if ((e as KeyboardEvent).key === this.key) {
       this.close();
     }
   }
@@ -567,7 +609,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
       // In a timeout so that things render first
       setTimeout(() => {
         if (!this._onResizeAttached) {
-          window.addEventListener('resize', this._collapse);
+          window.addEventListener("resize", this._collapse);
           this._onResizeAttached = true;
         }
       });
@@ -576,7 +618,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
 
   private _destroyCollapseListeners(): void {
     if (this._onResizeAttached) {
-      window.removeEventListener('resize', this._collapse);
+      window.removeEventListener("resize", this._collapse);
       this._onResizeAttached = false;
     }
   }
@@ -619,7 +661,9 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    */
   get _height(): number {
     if (this._elSidebar.nativeElement) {
-      return this._isDocked ? this._dockedSize : this._elSidebar.nativeElement.offsetHeight;
+      return this._isDocked
+        ? this._dockedSize
+        : this._elSidebar.nativeElement.offsetHeight;
     }
 
     return 0;
@@ -635,7 +679,9 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    */
   get _width(): number {
     if (this._elSidebar.nativeElement) {
-      return this._isDocked ? this._dockedSize : this._elSidebar.nativeElement.offsetWidth;
+      return this._isDocked
+        ? this._dockedSize
+        : this._elSidebar.nativeElement.offsetWidth;
     }
 
     return 0;
@@ -660,7 +706,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * @return {boolean} Sidebar's mode is "over".
    */
   get _isModeOver(): boolean {
-    return this.mode === 'over';
+    return this.mode === "over";
   }
 
   /**
@@ -671,7 +717,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * @return {boolean} Sidebar's mode is "push".
    */
   get _isModePush(): boolean {
-    return this.mode === 'push';
+    return this.mode === "push";
   }
 
   /**
@@ -682,7 +728,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * @return {boolean} Sidebar's mode is "slide".
    */
   get _isModeSlide(): boolean {
-    return this.mode === 'slide';
+    return this.mode === "slide";
   }
 
   /**
@@ -693,7 +739,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * @return {boolean} Sidebar is docked.
    */
   get _isDocked(): boolean {
-    return this.dock && this.dockedSize && !this.opened;
+    return !!(this.dock && this._dockedSize > 0 && !this.opened);
   }
 
   /**
@@ -704,7 +750,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * @return {boolean} Sidebar is positioned at the left or top.
    */
   get _isLeftOrTop(): boolean {
-    return this.position === 'left' || this.position === 'top';
+    return this.position === "left" || this.position === "top";
   }
 
   /**
@@ -715,7 +761,7 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
    * @return {boolean} Sidebar is positioned at the left or right.
    */
   get _isLeftOrRight(): boolean {
-    return this.position === 'left' || this.position === 'right';
+    return this.position === "left" || this.position === "right";
   }
 
   /**
@@ -735,10 +781,10 @@ export class Sidebar implements AfterContentInit, OnInit, OnChanges, OnDestroy {
   private _normalizePosition(): void {
     const ltr: boolean = isLTR();
 
-    if (this.position === 'start') {
-      this.position = ltr ? 'left' : 'right';
-    } else if (this.position === 'end') {
-      this.position = ltr ? 'right' : 'left';
+    if (this.position === "start") {
+      this.position = ltr ? "left" : "right";
+    } else if (this.position === "end") {
+      this.position = ltr ? "right" : "left";
     }
   }
 }
