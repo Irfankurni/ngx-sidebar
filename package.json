@@ -1,18 +1,18 @@
 {
   "name": "@kuradev/ng-sidebar",
-  "version": "18.0.0",
+  "version": "18.0.1",
   "description": "Angular sidebar component.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kuradev/ngx-sidebar.git"
+    "url": "git+https://github.com/irfankurni/ngx-sidebar.git"
   },
-  "homepage": "https://github.com/kuradev/ngx-sidebar.git",
+  "homepage": "https://github.com/irfankurni/ngx-sidebar.git",
   "bugs": {
-    "url": "https://github.com/kuradev/ngx-sidebar.git/issues"
+    "url": "https://github.com/irfankurni/ngx-sidebar.git/issues"
   },
   "author": "Eugene Cheung",
   "contributors": [
-    "Irfan Kurniawan (kuradev)"
+    "Irfan Kurniawan"
   ],
   "license": "MIT",
   "keywords": [
