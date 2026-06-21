@@ -1,6 +1,6 @@
 # @kuradev/ng-sidebar
 
-An Angular sidebar component (supporting Angular 16+).
+An Angular sidebar component (supporting Angular 17.2+ with Signals and built-in Control Flow).
 
 This project is a fork of [arkon/ng-sidebar](https://github.com/arkon/ng-sidebar) to provide support for modern Angular versions.
 
@@ -161,6 +161,16 @@ If you are using Angular's default emulated view encapsulation, you may have to 
 | ------------------------------ | ------------------------------------------------ |
 | `ng-sidebar__content`          | Class of the wrapper `div` for the page content. |
 | `ng-sidebar__content--animate` | When `animate` is `true` for the container.      |
+
+### Theming (CSS Variables)
+
+The sidebar and container use CSS variables for easy theming without needing `::ng-deep`.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `--ng-sidebar-backdrop-bg` | `#000` | The background color of the backdrop. |
+| `--ng-sidebar-backdrop-opacity` | `0.75` | The opacity of the backdrop. |
+| `--ng-sidebar-transition-duration` | `0.3s` | The duration of the sidebar and container animations. |
 
 ## Options
 

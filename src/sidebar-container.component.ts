@@ -3,38 +3,37 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  EventEmitter,
-  Inject,
-  Input,
-  OnChanges,
   OnDestroy,
-  Output,
-  PLATFORM_ID,
-  SimpleChanges,
+  input,
+  output,
+  effect,
+  afterNextRender,
+  untracked,
+  model
 } from "@angular/core";
-import { isPlatformBrowser, CommonModule } from "@angular/common";
-import { Subscription } from "rxjs";
+import { CommonModule } from "@angular/common";
+
 
 import { Sidebar } from "./sidebar.component";
 
-// Based on https://github.com/angular/material2/tree/master/src/lib/sidenav
 @Component({
   selector: "ng-sidebar-container",
   template: `
-    <div
-      *ngIf="showBackdrop"
-      aria-hidden="true"
-      class="ng-sidebar__backdrop"
-      [ngClass]="backdropClass"
-      (click)="_onBackdropClicked()"
-    ></div>
+    @if (showBackdrop()) {
+      <div
+        aria-hidden="true"
+        class="ng-sidebar__backdrop"
+        [ngClass]="backdropClass()"
+        (click)="_onBackdropClicked()"
+      ></div>
+    }
 
     <ng-content select="ng-sidebar,[ng-sidebar]"></ng-content>
 
     <div
       class="ng-sidebar__content"
-      [class.ng-sidebar__content--animate]="animate"
-      [ngClass]="contentClass"
+      [class.ng-sidebar__content--animate]="animate()"
+      [ngClass]="contentClass()"
       [ngStyle]="_getContentStyle()"
     >
       <ng-content select="[ng-sidebar-content]"></ng-content>
@@ -57,8 +56,8 @@ import { Sidebar } from "./sidebar.component";
         bottom: 0;
         left: 0;
         right: 0;
-        background: #000;
-        opacity: 0.75;
+        background: var(--ng-sidebar-backdrop-bg, #000);
+        opacity: var(--ng-sidebar-backdrop-opacity, 0.75);
         pointer-events: auto;
         z-index: 1;
       }
@@ -74,10 +73,10 @@ import { Sidebar } from "./sidebar.component";
       }
 
       .ng-sidebar__content--animate {
-        -webkit-transition: -webkit-transform 0.3s cubic-bezier(0, 0, 0.3, 1),
-          padding 0.3s cubic-bezier(0, 0, 0.3, 1);
-        transition: transform 0.3s cubic-bezier(0, 0, 0.3, 1),
-          padding 0.3s cubic-bezier(0, 0, 0.3, 1);
+        -webkit-transition: -webkit-transform var(--ng-sidebar-transition-duration, 0.3s) cubic-bezier(0, 0, 0.3, 1),
+          padding var(--ng-sidebar-transition-duration, 0.3s) cubic-bezier(0, 0, 0.3, 1);
+        transition: transform var(--ng-sidebar-transition-duration, 0.3s) cubic-bezier(0, 0, 0.3, 1),
+          padding var(--ng-sidebar-transition-duration, 0.3s) cubic-bezier(0, 0, 0.3, 1);
       }
     `,
   ],
@@ -85,63 +84,36 @@ import { Sidebar } from "./sidebar.component";
   standalone: true,
   imports: [CommonModule],
 })
-export class SidebarContainer
-  implements AfterContentInit, OnChanges, OnDestroy
-{
-  @Input() animate: boolean = true;
+export class SidebarContainer implements AfterContentInit, OnDestroy {
+  animate = input<boolean>(true);
 
-  @Input() allowSidebarBackdropControl: boolean = true;
-  @Input() showBackdrop: boolean = false;
-  @Output() showBackdropChange = new EventEmitter<boolean>();
-  @Output() onBackdropClicked = new EventEmitter<null>();
+  allowSidebarBackdropControl = input<boolean>(true);
+  showBackdrop = model<boolean>(false);
+  onBackdropClicked = output<void>();
 
-  @Input() contentClass?: string;
-  @Input() backdropClass?: string;
+  contentClass = input<string>();
+  backdropClass = input<string>();
 
   private _sidebars: Array<Sidebar> = [];
-  private _subscriptions: Map<Sidebar, Subscription[]> = new Map();
+  private _subscriptions: Map<Sidebar, Array<{ unsubscribe: () => void }>> = new Map();
 
-  private _isBrowser: boolean;
-
-  constructor(
-    private _ref: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) platformId: Object
-  ) {
-    this._isBrowser = isPlatformBrowser(platformId);
+  constructor(private _ref: ChangeDetectorRef) {
+    effect(() => {
+      // Just a placeholder to ensure effect tracks showBackdrop if needed elsewhere.
+      this.showBackdrop();
+    });
   }
 
   ngAfterContentInit(): void {
-    if (!this._isBrowser) {
-      return;
-    }
-
     this._onToggle();
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (!this._isBrowser) {
-      return;
-    }
-
-    if (changes["showBackdrop"]) {
-      this.showBackdropChange.emit(changes["showBackdrop"].currentValue);
-    }
-  }
-
   ngOnDestroy(): void {
-    if (!this._isBrowser) {
-      return;
-    }
-
     this._unsubscribe();
   }
 
   /**
    * @internal
-   *
-   * Adds a sidebar to the container's list of sidebars.
-   *
-   * @param sidebar {Sidebar} A sidebar within the container to register.
    */
   _addSidebar(sidebar: Sidebar) {
     this._sidebars.push(sidebar);
@@ -150,10 +122,6 @@ export class SidebarContainer
 
   /**
    * @internal
-   *
-   * Removes a sidebar from the container's list of sidebars.
-   *
-   * @param sidebar {Sidebar} The sidebar to remove.
    */
   _removeSidebar(sidebar: Sidebar) {
     const index = this._sidebars.indexOf(sidebar);
@@ -165,12 +133,8 @@ export class SidebarContainer
 
   /**
    * @internal
-   *
-   * Computes `margin` value to push page contents to accommodate open sidebars as needed.
-   *
-   * @return {CSSStyleDeclaration} margin styles for the page content.
    */
-  _getContentStyle(): CSSStyleDeclaration {
+  _getContentStyle(): Record<string, string> {
     let left = 0,
       right = 0,
       top = 0,
@@ -181,39 +145,37 @@ export class SidebarContainer
     let widthStyle: string = "";
 
     for (const sidebar of this._sidebars) {
-      // Slide mode: we need to translate the entire container
-      if (sidebar._isModeSlide) {
-        if (sidebar.opened) {
-          const transformDir: string = sidebar._isLeftOrRight ? "X" : "Y";
-          const transformAmt: string = `${sidebar._isLeftOrTop ? "" : "-"}${
-            sidebar._isLeftOrRight ? sidebar._width : sidebar._height
+      if (sidebar._isModeSlide()) {
+        if (sidebar.opened()) {
+          const transformDir: string = sidebar._isLeftOrRight() ? "X" : "Y";
+          const transformAmt: string = `${sidebar._isLeftOrTop() ? "" : "-"}${
+            sidebar._isLeftOrRight() ? sidebar._width : sidebar._height
           }`;
 
           transformStyle = `translate${transformDir}(${transformAmt}px)`;
         }
       }
 
-      // Create a space for the sidebar
-      if ((sidebar._isModePush && sidebar.opened) || sidebar.dock) {
+      if ((sidebar._isModePush() && sidebar.opened()) || sidebar.dock()) {
         let paddingAmt: number = 0;
 
-        if (sidebar._isModeSlide && sidebar.opened) {
-          if (sidebar._isLeftOrRight) {
+        if (sidebar._isModeSlide() && sidebar.opened()) {
+          if (sidebar._isLeftOrRight()) {
             widthStyle = "100%";
           } else {
             heightStyle = "100%";
           }
         } else {
-          if (sidebar._isDocked || (sidebar._isModeOver && sidebar.dock)) {
-            paddingAmt = sidebar._dockedSize;
+          if (sidebar._isDocked() || (sidebar._isModeOver() && sidebar.dock())) {
+            paddingAmt = sidebar._dockedSize();
           } else {
-            paddingAmt = sidebar._isLeftOrRight
+            paddingAmt = sidebar._isLeftOrRight()
               ? sidebar._width
               : sidebar._height;
           }
         }
 
-        switch (sidebar.position) {
+        switch (sidebar._normalizedPosition()) {
           case "left":
             left = Math.max(left, paddingAmt);
             break;
@@ -239,22 +201,19 @@ export class SidebarContainer
       transform: transformStyle,
       height: heightStyle,
       width: widthStyle,
-    } as CSSStyleDeclaration;
+    };
   }
 
   /**
    * @internal
-   *
-   * Closes sidebars when the backdrop is clicked, if they have the
-   * `closeOnClickBackdrop` option set.
    */
   _onBackdropClicked(): void {
     let backdropClicked = false;
     for (const sidebar of this._sidebars) {
       if (
-        sidebar.opened &&
-        sidebar.showBackdrop &&
-        sidebar.closeOnClickBackdrop
+        sidebar.opened() &&
+        sidebar.showBackdrop() &&
+        sidebar.closeOnClickBackdrop()
       ) {
         sidebar.close();
         backdropClicked = true;
@@ -266,11 +225,8 @@ export class SidebarContainer
     }
   }
 
-  /**
-   * Subscribes from a sidebar events to react properly.
-   */
   private _subscribe(sidebar: Sidebar): void {
-    const subs: Subscription[] = [
+    const subs: Array<{ unsubscribe: () => void }> = [
       sidebar.onOpenStart.subscribe(() => this._onToggle()),
       sidebar.onOpened.subscribe(() => this._markForCheck()),
       sidebar.onCloseStart.subscribe(() => this._onToggle()),
@@ -283,9 +239,6 @@ export class SidebarContainer
     this._subscriptions.set(sidebar, subs);
   }
 
-  /**
-   * Unsubscribes from all sidebars.
-   */
   private _unsubscribe(sidebar?: Sidebar): void {
     if (sidebar) {
       const subs = this._subscriptions.get(sidebar);
@@ -301,18 +254,13 @@ export class SidebarContainer
     }
   }
 
-  /**
-   * Check if we should show the backdrop when a sidebar is toggled.
-   */
   private _onToggle(): void {
-    if (this._sidebars.length > 0 && this.allowSidebarBackdropControl) {
-      // Show backdrop if a single open sidebar has it set
+    if (this._sidebars.length > 0 && this.allowSidebarBackdropControl()) {
       const hasOpen = this._sidebars.some(
-        (sidebar) => sidebar.opened && sidebar.showBackdrop
+        (sidebar) => sidebar.opened() && sidebar.showBackdrop()
       );
 
-      this.showBackdrop = hasOpen;
-      this.showBackdropChange.emit(hasOpen);
+      this.showBackdrop.set(hasOpen);
     }
 
     setTimeout(() => {
@@ -320,9 +268,6 @@ export class SidebarContainer
     });
   }
 
-  /**
-   * Triggers change detection to recompute styles.
-   */
   private _markForCheck(): void {
     this._ref.markForCheck();
   }

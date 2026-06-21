@@ -1,6 +1,6 @@
 {
   "name": "@kuradev/ng-sidebar",
-  "version": "18.0.1",
+  "version": "18.0.2",
   "description": "Angular sidebar component.",
   "repository": {
     "type": "git",
@@ -32,8 +32,8 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "@angular/common": ">=16.0.0",
-    "@angular/core": ">=16.0.0",
+    "@angular/common": ">=17.2.0",
+    "@angular/core": ">=17.2.0",
     "rxjs": "^6.5.3 || ^7.4.0"
   },
   "devDependencies": {
