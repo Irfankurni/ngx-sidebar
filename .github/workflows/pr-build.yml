@@ -1,0 +1,25 @@
+name: Build Check
+
+on:
+  pull_request:
+    branches:
+      - master # Trigger when a PR is opened/updated targeting the master branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x' # Matching your preferred Node version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Angular Library
+        run: npm run build
+        # If this step fails, the action will fail and block the PR merge
